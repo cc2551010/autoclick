@@ -1,0 +1,328 @@
+// Oct. 20, 2022
+    // Added vector of vectors for click locations' coordinate points.
+// Oct. 22, 2022
+    // Added program to consider time in between clicks.
+// Oct. 24, 2022
+    // Added shutdown feature.
+// Oct. 25, 2022
+    // Added single-click and multi-click options.
+// Nov. 24, 2022
+    // Added colored text
+
+#pragma warning(disable: 4996)
+
+#include <iostream>
+#include <windows.h>
+#include <conio.h>
+#include <time.h>
+#include <vector>
+#include <cmath>
+#include <string>
+#include <winuser.h>
+#include <sstream>
+#include <ctime>
+
+void leftClick();
+void leftClickDown();
+void leftClickUp();
+void showCurrentTime();
+
+const int CLICK_DELAY = 25; // milliseconds
+
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+int main()
+{
+    /*
+    std::string s = "300 h";
+    std::istringstream ss;
+    std::ostringstream os;
+
+    int d = 0;
+    char u = '\0';
+
+    ss.str(s);
+    ss >> d;
+    ss >> u;
+    os << d << " !!! " << u << '\n';
+    */
+
+    /*
+    const int ENTER = 13, UP = 72, DOWN = 80, LEFT = 75, RIGHT = 77;
+    char x = '\0';
+    while (true && x != ENTER)
+    {
+        while (!kbhit()) {}
+        x = getch();
+        if (x == 0 || x == -32) // 0 or 224
+        {
+            x = getch();
+            switch (x)
+            {
+            case UP:
+                std::cout << "UP";
+                break;
+            case DOWN:
+                std::cout << "DOWN";
+                break;
+            case LEFT:
+                std::cout << "LEFT";
+                break;
+            case RIGHT:
+                std::cout << "RIGHT";
+                break;
+            }
+        }
+    }
+    */
+
+    bool displayColors = 0;
+    if (displayColors == 1)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            SetConsoleTextAttribute(hConsole, i);
+            std::cout << i << " EXAMPLE\n";
+        }
+    }
+
+    HWND console = GetConsoleWindow();
+    RECT r = { 0, 0, 0, 0 };
+    GetWindowRect(console, &r);
+    MoveWindow(console, r.right / 2, r.bottom / 2, 300, 400, TRUE);
+
+    // ASCII chars
+    const int CARR_RET = 13, BACKSPACE = 8;
+
+    char name[50] = {};
+    POINT p;
+    std::vector <std::vector <int>> v_v;
+    std::vector <std::vector <std::vector <int>>> v_v_v;
+    int timeBetweenClicks = 0, timeOfRun = 0, timeBeforeRun = 0, timeBeforeNextRun = 0;
+    int cursorCurrentXpos = 0, cursorCurrentYpos = 0, shutdownDelay = 0;
+    char select = '\0', input = '\0';
+    bool shutdown = false;
+    std::string shutdownCommand = "\0";
+    unsigned short int textColor = 7;
+    int quantityOfClicks = -1;
+
+    // menu
+           // single click
+           // multiclick
+    SetConsoleTextAttribute(hConsole, 7);
+    std::cout << "'X' to set clicks, 'S' to stop.";
+    do
+    {
+        while (tolower(select) != 's')
+        {
+            select = tolower(_getch());
+            switch (select)
+            {
+                case 'x':
+                    if (textColor <= 2 || textColor > 7)
+                    {
+                        textColor = 7;
+                    }
+                    SetConsoleTextAttribute(hConsole, --textColor);
+                    GetCursorPos(&p);
+                    std::vector <int> v_p;
+                    v_p.push_back(p.x);
+                    v_p.push_back(p.y);
+                    v_v.push_back(v_p);
+                    std::cout << "\n(" << v_v[v_v.size() - 1][0] << ", " << v_v[v_v.size() - 1][1] << ')';
+                    break;
+            }
+            switch (select)
+            {
+                case 'l':
+                    if (v_v.size() > 0)
+                    {
+                        SetConsoleTextAttribute(hConsole, 8);
+                        std::cout << "\n\tLOOP " << v_v_v.size() + 1 << " :\n";
+                        v_v_v.push_back(v_v);
+                        for (unsigned long long int i = 0; i < v_v.size(); i++)
+                        {
+                            std::cout << "\t(" << v_v_v[v_v_v.size() - 1][i][0] << ", " << v_v_v[v_v_v.size() - 1][i][1] << ')';
+                            if (i < v_v.size() - 1)
+                            {
+                                std::cout << '\n';
+                            }
+                        }
+                        for (unsigned long long int i = v_v.size(); i > 0; i--)
+                        {
+                            v_v.pop_back();
+                        }
+                        break;
+                    }
+            }
+        }
+        select = '\0';
+    }
+    while (v_v.size() < 1 && v_v_v.size() < 1);
+    SetConsoleTextAttribute(hConsole, 7);
+    std::cout << "\nName Of Routine: ";
+    SetConsoleTextAttribute(hConsole, 192);
+    while (input != CARR_RET)
+    {
+        input = _getch();
+        if (input == BACKSPACE)
+        {
+            SetConsoleTextAttribute(hConsole, 7);
+            std::cout << "\b \b";
+            SetConsoleTextAttribute(hConsole, 192);
+        }
+        else
+        {
+            std::cout << input;
+        }
+    }
+    SetConsoleTextAttribute(hConsole, 7);
+    if (v_v.size() == 1) // single click options
+    {
+        std::cout << "\nTime before first click: ";
+        std::cin >> timeBeforeRun;
+        std::cout << "Time between clicks: ";
+        std::cin >> timeBeforeNextRun;
+        std::cout << "Time or Quantity?";
+        while (tolower(select) != 't' && tolower(select) != 'q')
+        {
+            select = tolower(_getch());
+        }
+        if (tolower(select) == 't')
+        {
+            std::cout << " TIME\nTime to run: ";
+            std::cin >> timeOfRun;
+        }
+        else if (tolower(select) == 'q')
+        {
+            std::cout << " QUANTITY\nHow many: ";
+            std::cin >> quantityOfClicks;
+        }
+    }
+    else // multiclick options
+    {
+        std::cout << "\nTime before first run: ";
+        std::cin >> timeBeforeRun;
+        std::cout << "Time between clicks: ";
+        std::cin >> timeBetweenClicks;
+        std::cout << "Time between runs: ";
+        std::cin >> timeBeforeNextRun;
+        std::cout << "Time or Quantity?";
+        while (tolower(select) != 't' && tolower(select) != 'q')
+        {
+            select = tolower(_getch());
+        }
+        if (tolower(select) == 't')
+        {
+            std::cout << " TIME\nTime to run: ";
+            std::cin >> timeOfRun;
+        }
+        else if (tolower(select) == 'q')
+        {
+            std::cout << " QUANTITY\nHow many: ";
+            std::cin >> quantityOfClicks;
+        }
+    }
+    if (timeBeforeNextRun <= 0)
+    {
+        timeBeforeNextRun = 1; // allow user to intervene
+    }
+    std::cout << "Shutdown system after run: ";
+    while (tolower(select) != 'y' && tolower(select) != 'n' && tolower(select) != '1' && tolower(select) != '0')
+    {
+        select = tolower(_getch());
+    }
+    if (select == 'y' || select == '1')
+    {
+        shutdown = true;
+        std::cout << "YES";
+        std::cout << "\nTime after run: ";
+        std::cin >> shutdownDelay;
+    }
+    else // select == 'y' || select == '1'
+    {
+        std::cout << "NO";
+    }
+    /*
+    for (int i = 0; i < v_v.size(); i++)
+    {
+        std::cout << "\n(" << v_v[i][0] << ", " << v_v[i][1] << ")";
+    }
+    */
+    std::cout << "\n\nStarted: ";
+    showCurrentTime();
+    Sleep(timeBeforeRun * 1000);
+    timeBeforeRun = (int)ceil((float)clock() / 1000); // update to compensate for time used during set up
+    long long int v_vCount = 0;
+    /*
+    std::cout << "\nclock()=" << clock();
+    std::cout << "\ntimeBeforeRun=" << timeBeforeRun;
+    std::cout << "\n(timeBeforeRun + timeOfRun) * 1000=" << (timeBeforeRun + timeOfRun) * 1000;
+    */
+    if (quantityOfClicks > 0)
+    {
+        for(int i = 0; i < quantityOfClicks; i++)
+        {
+            std::cout << '\r' << "CLICKS: " << i + 1;
+            GetCursorPos(&p);
+            cursorCurrentXpos = p.x; cursorCurrentYpos = p.y;
+            SetCursorPos(v_v[v_vCount][0], v_v[v_vCount][1]);
+            leftClick();
+            SetCursorPos(cursorCurrentXpos, cursorCurrentYpos);
+            v_vCount++;
+            if (v_vCount == v_v.size()) // reset script
+            {
+                v_vCount = 0;
+                Sleep(timeBeforeNextRun * 1000);
+            }
+            Sleep(timeBetweenClicks * 1000);
+        }
+    }
+    else
+    {
+        while (clock() <= ((timeBeforeRun + timeOfRun) * 1000) + (CLICK_DELAY * (int)v_v.size()))
+        {
+            std::cout << "\rTime Remaining: " << (abs(clock() - ((timeBeforeRun + timeOfRun) * 1000) + (CLICK_DELAY * (int)v_v.size()))) / 1000 << " seconds"; // display remaining time
+            GetCursorPos(&p); cursorCurrentXpos = p.x; cursorCurrentYpos = p.y;
+            SetCursorPos(v_v[v_vCount][0], v_v[v_vCount][1]);
+            leftClick();
+            SetCursorPos(cursorCurrentXpos, cursorCurrentYpos);
+            v_vCount++;
+            if (v_vCount == v_v.size()) // reset script
+            {
+                v_vCount = 0;
+                Sleep(timeBeforeNextRun * 1000);
+            }
+            Sleep(timeBetweenClicks * 1000);
+        }
+    }
+    if (shutdown)
+    {
+        system(("shutdown -s -t " + std::to_string(shutdownDelay)).c_str());
+    }
+
+    return 0;
+}
+
+void leftClick()
+{
+    leftClickDown();
+    leftClickUp();
+    Sleep(CLICK_DELAY);
+}
+
+void leftClickDown()
+{
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+}
+
+void leftClickUp()
+{
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+}
+
+void showCurrentTime()
+{
+    time_t my_time = time(NULL);
+    std::cout << ctime(&my_time);
+}
